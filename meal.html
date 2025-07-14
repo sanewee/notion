@@ -12,15 +12,15 @@
       background-color: #fff;
       color: #000;
     }
-    
+
     table {
       border-collapse: collapse;
       width: 100%;
       table-layout: fixed;
     }
-    
+
     th, td {
-      border: 0.5px solid #EBEBE9;
+      border: 1px solid #EBEBE9;
       padding: 6px 8px;
       text-align: center;
       vertical-align: top;
@@ -28,32 +28,30 @@
       background-color:  #fff;
       color: #000;
     }
-    
+
     th {
       font-weight: 600;
       background-color: #F8F8F7;
       color: #000;
     }
-    
-    /* 다크 모드 완전 대응 */
+
     @media (prefers-color-scheme: dark) {
       html, body {
         background-color: #191919;
         color: #E9E9E7;
       }
-    
+
       th, td {
         background-color: #191919 !important;
         color: #eee !important;
-        border-color: #2f2f2f !important;
+        border-color: #e9e9e7 !important;
       }
-    
+
       th {
         background-color: #2f2f2f !important;
         color: #fff !important;
       }
     }
-    
   </style>
 </head>
 <body>
@@ -90,7 +88,14 @@
       dates.push(d);
     }
 
-    const formatDate = d => d.toISOString().slice(0, 10).replace(/-/g, '');
+    // 수정된 formatDate 함수: toISOString() 제거
+    const formatDate = d => {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}${mm}${dd}`;
+    };
+
     const fromYMD = formatDate(dates[0]);
     const toYMD = formatDate(dates[4]);
 
