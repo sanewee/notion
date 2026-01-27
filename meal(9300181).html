@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Meal</title>
+  <style>
+    html, body {
+      margin: 2px;
+      padding: 0;
+      font-family: sans-serif;
+      font-size: clamp(12px, 1.2vw, 18px);
+      background-color: #fff;
+      color: #000;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border: 1px solid #EBEBE9;
+      padding: 6px 8px;
+      text-align: center;
+      vertical-align: top;
+      word-break: break-word;
+      background-color:  #fff;
+      color: #000;
+    }
+
+    th {
+      font-weight: 600;
+      background-color: #F8F8F7;
+      color: #000;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      html, body {
+        background-color: #191919;
+        color: #E9E9E7;
+      }
+
+      th, td {
+        background-color: #191919 !important;
+        color: #eee !important;
+        border-color: #e9e9e7 !important;
+      }
+
+      th {
+        background-color: #2f2f2f !important;
+        color: #fff !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <table id="mealTable">
+    <thead>
+      <tr id="dateRow"></tr>
+    </thead>
+    <tbody>
+      <tr id="lunchRow"></tr>
+      <tr id="dinnerRow"></tr>
+    </tbody>
+  </table>
+
+  <script>
+    const eduOfficeCode = 'I10';
+    const schoolCode = '9300181';
+
+    // YYYYMMDD 포맷
+    const formatDate = (d) => {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}${mm}${dd}`;
+    };
+
+    const today = new Date();
+    const todayYMD = formatDate(today);
+
+    // 오늘만 조회: from=to=오늘
+    const apiUrl =
+  `/api/meal?office=${eduOfficeCode}&school=${schoolCode}&from=${todayYMD}&to=${todayYMD}`;
+
+    fetch(apiUrl)
+      .then(res => res.json())
+      .then(data => {
+        const entries = data?.mealServiceDietInfo?.[1]?.row || [];
+        const dateRow = document.getElementById('dateRow');
+        const lunchRow = document.getElementById('lunchRow');
+        const dinnerRow = document.getElementById('dinnerRow');
+
+        // 표 헤더(오늘 날짜 1칸)
+        const label = `${today.getMonth() + 1}/${today.getDate()}`;
+        dateRow.innerHTML = `<th>${label}</th>`;
+
+        // 중식
+        const lunch = entries.find(e => e.MLSV_YMD === todayYMD && e.MMEAL_SC_NM === '중식');
+        const lunchText = lunch
+          ? lunch.DDISH_NM.replace(/\([^\)]*\)/g, '').replace(/<br\/?>/g, '<br>')
+          : '-';
+        lunchRow.innerHTML = `<td>${lunchText}</td>`;
+
+        // 석식
+        const dinner = entries.find(e => e.MLSV_YMD === todayYMD && e.MMEAL_SC_NM === '석식');
+        const dinnerText = dinner
+          ? dinner.DDISH_NM.replace(/\([^\)]*\)/g, '').replace(/<br\/?>/g, '<br>')
+          : '-';
+        dinnerRow.innerHTML = `<td>${dinnerText}</td>`;
+      })
+      .catch(err => {
+        document.getElementById('mealTable').innerHTML =
+          `<tr><td>데이터를 불러오기 실패</td></tr>`;
+        console.error(err);
+      });
+  </script>
+</body>
+</html>
