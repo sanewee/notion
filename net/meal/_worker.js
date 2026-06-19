@@ -2,7 +2,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    if (url.pathname === "/api/meal") {
+    if (url.pathname === "/api/meal") { 
       return handleMeal(env);
     }
 
