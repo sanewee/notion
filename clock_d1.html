@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Clock</title>
+
+<style>
+
+body{
+    margin:0;
+    background:white;
+    color:black;
+}
+
+/* 시계 영역 */
+.clock-box{
+    width:99vw;
+    margin:auto;
+    text-align:center;
+    padding-top:3vh;
+}
+
+/* 시간 */
+.time{
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight:900;
+    font-style:italic;
+    font-size:18vw;
+    letter-spacing:0.05em;
+    white-space:nowrap;
+}
+
+/* 날짜 */
+.date{
+    margin-top:4vh;
+    font-size:8vw;
+    font-family: Georgia, "Times New Roman", serif;
+    font-style:italic;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="clock-box">
+
+<div class="time" id="time">00:00:00</div>
+<div class="date" id="date">2026. 3. 11.(Wed)</div>
+
+</div>
+
+<script>
+
+function updateClock(){
+
+    const now = new Date()
+
+    const h = String(now.getHours()).padStart(2,"0")
+    const m = String(now.getMinutes()).padStart(2,"0")
+    const s = String(now.getSeconds()).padStart(2,"0")
+
+    document.getElementById("time").textContent =
+        `${h}:${m}:${s}`
+
+    const year = now.getFullYear()
+    const month = now.getMonth()+1
+    const day = now.getDate()
+
+    const weekday = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]
+
+    const w = weekday[now.getDay()]
+
+    document.getElementById("date").textContent =
+        `${year}. ${month}. ${day}.(${w})`
+}
+
+updateClock()
+
+setInterval(updateClock,1000)
+
+</script>
+
+</body>
+</html>
+
