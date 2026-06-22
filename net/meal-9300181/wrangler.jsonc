@@ -1,7 +1,9 @@
 {
   "name": "notion-meal-9300181",
   "compatibility_date": "2026-06-22",
+  "main": "./_worker.js",
   "assets": {
-    "directory": "."
+    "directory": ".",
+    "binding": "ASSETS"
   }
 }
