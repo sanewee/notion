@@ -6,11 +6,20 @@
 <title>Digital Clock</title>
 
 <style>
+:root{
+    --text-color:black;
+}
 
-body{
+@media (prefers-color-scheme:dark){
+    :root{
+        --text-color:white;
+    }
+}
+
+html, body{
     margin:0;
-    background:white;
-    color:black;
+    background:transparent;
+    color:var(--text-color);
 }
 
 /* 시계 영역 */
@@ -23,7 +32,7 @@ body{
 
 /* 시간 */
 .time{
-    font-family: Georgia, "Times New Roman", serif;
+    font-family:Georgia, "Times New Roman", serif;
     font-weight:900;
     font-style:italic;
     font-size:18vw;
@@ -35,24 +44,20 @@ body{
 .date{
     margin-top:4vh;
     font-size:8vw;
-    font-family: Georgia, "Times New Roman", serif;
+    font-family:Georgia, "Times New Roman", serif;
     font-style:italic;
 }
-
 </style>
 </head>
 
 <body>
 
 <div class="clock-box">
-
-<div class="time" id="time">00:00:00</div>
-<div class="date" id="date">2026. 3. 11.(Wed)</div>
-
+    <div class="time" id="time">00:00:00</div>
+    <div class="date" id="date">2026. 3. 11.(Wed)</div>
 </div>
 
 <script>
-
 function updateClock(){
 
     const now = new Date()
@@ -69,7 +74,6 @@ function updateClock(){
     const day = now.getDate()
 
     const weekday = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]
-
     const w = weekday[now.getDay()]
 
     document.getElementById("date").textContent =
@@ -77,11 +81,8 @@ function updateClock(){
 }
 
 updateClock()
-
 setInterval(updateClock,1000)
-
 </script>
 
 </body>
 </html>
-
