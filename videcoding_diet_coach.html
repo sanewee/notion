@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>다이어트 코치 봇 구조 이해</title>
+<style>
+  :root{
+    --yellow:#F5E03D; --green:#1B9E56; --dark:#1c2530; --ink:#20272e;
+    --gray:#eef1f4; --line:#d6dbe0; --muted:#5b6672;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    background:#f7f8fa; color:var(--ink); line-height:1.6;
+    padding:32px 16px 80px;
+  }
+  .wrap{max-width:960px;margin:0 auto}
+  header{margin-bottom:28px}
+  .tag{display:inline-block;background:var(--dark);color:var(--yellow);
+    font-size:13px;font-weight:700;padding:5px 14px;border-radius:20px;letter-spacing:.5px}
+  h1{font-size:30px;font-weight:800;margin:14px 0 6px;letter-spacing:-.5px}
+  .sub{color:var(--muted);font-size:15px}
+  .hint{font-size:14px;color:var(--green);font-weight:700;margin-top:10px}
+
+  section{background:#fff;border:1px solid var(--line);border-radius:18px;
+    padding:26px;margin-top:22px;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  h2{font-size:19px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  h2::before{content:"";width:6px;height:20px;background:var(--green);border-radius:3px;display:inline-block}
+  .lead{color:var(--muted);font-size:14px;margin-bottom:20px}
+
+  /* FLOW */
+  .flow{display:flex;flex-direction:column;gap:0}
+  .step{display:grid;grid-template-columns:56px 1fr;gap:16px;position:relative;
+    padding:14px;border-radius:14px;cursor:pointer;transition:.2s;border:2px solid transparent}
+  .step:hover,.step.active{background:#fffdf0;border-color:var(--yellow)}
+  .step.active{box-shadow:0 4px 14px rgba(0,0,0,.06)}
+  .num{width:56px;height:56px;border-radius:14px;background:var(--dark);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800}
+  .step.active .num{background:var(--green)}
+  .body h3{font-size:16.5px;font-weight:800;margin-bottom:2px}
+  .body .who{font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:4px}
+  .body p{font-size:14px;color:#3c454e}
+  .arrow{grid-column:1;justify-self:center;color:var(--line);font-size:22px;line-height:1;
+    margin:-2px 0}
+  .detail{grid-column:2;margin-top:10px;font-size:13.5px;background:#f2f8f4;
+    border-left:3px solid var(--green);padding:10px 14px;border-radius:8px;color:#2c4a38;
+    display:none}
+  .step.active .detail{display:block}
+
+  /* 재료 3 */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+  .card{border:1px solid var(--line);border-radius:14px;padding:18px;background:#fafbfc}
+  .card .k{font-size:26px}
+  .card h4{font-size:15px;font-weight:800;margin:8px 0 4px}
+  .card p{font-size:13px;color:var(--muted)}
+  .plus{display:flex;align-items:center;justify-content:center;font-size:22px;
+    font-weight:800;color:var(--green)}
+  .eq{text-align:center;margin-top:16px;font-size:15px;font-weight:700}
+  .eq b{color:var(--green)}
+
+  /* 부품 */
+  .parts{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .part{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);
+    border-radius:12px;padding:14px}
+  .ic{font-size:24px;flex-shrink:0}
+  .part b{font-size:14.5px}
+  .part span{display:block;font-size:12.5px;color:var(--muted)}
+
+  .note{font-size:13px;color:var(--muted);margin-top:18px;padding:12px 16px;
+    background:var(--gray);border-radius:10px}
+  @media(max-width:680px){
+    .cards,.parts{grid-template-columns:1fr}
+    .plus{display:none}
+    h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="tag">78차시 · AI 다이어트 코치</span>
+    <h1>봇은 무엇을 기반으로 응답할까?</h1>
+    <p class="sub">텔레그램에 식단을 보냈을 때, 뒤에서 벌어지는 일</p>
+    <p class="hint">↓ 각 단계를 클릭하면 자세한 설명이 펼쳐집니다</p>
+  </header>
+
+  <!-- FLOW -->
+  <section>
+    <h2>전체 흐름</h2>
+    <p class="lead">핵심 — 봇(텔레그램)은 <b>배달만</b> 하고, 실제 응답은 GAS가 Gemini에게 물어봐서 만든다.</p>
+    <div class="flow" id="flow">
+
+      <div class="step" data-i="1">
+        <div class="num">1</div>
+        <div class="body">
+          <div class="who">사용자 · 텔레그램</div>
+          <h3>식단을 보낸다 📷</h3>
+          <p>음식 사진이나 "오늘 김치찌개 먹었어" 같은 글을 봇에게 전송.</p>
+        </div>
+        <div class="detail">텔레그램은 입출력 창구일 뿐, 스스로 분석하지 않습니다.</div>
+      </div>
+      <div class="arrow">▼</div>
+
+      <div class="step" data-i="2">
+        <div class="num">2</div>
+        <div class="body">
+          <div class="who">웹훅 → GAS</div>
+          <h3>메시지가 GAS로 배달된다</h3>
+          <p>미리 등록한 <b>웹훅</b>을 통해 텔레그램이 메시지를 GAS의 <code>doPost</code>로 전달.</p>
+        </div>
+        <div class="detail">보낸 사람이 나(TARGET_CHAT_ID)인지 먼저 확인하고, 아니면 즉시 차단합니다.</div>
+      </div>
+      <div class="arrow">▼</div>
+
+      <div class="step" data-i="3">
+        <div class="num">3</div>
+        <div class="body">
+          <div class="who">GAS → Gemini</div>
+          <h3>Gemini에게 분석을 맡긴다 🧠</h3>
+          <p>내 입력 + 시스템 프롬프트(코치 성격·규칙)를 함께 넘기면, Gemini가 음식을 인식해 칼로리·영양을 추정하고 코칭 문장을 <b>생성</b>.</p>
+        </div>
+        <div class="detail">응답 내용 자체를 만들어내는 건 바로 이 Gemini(AI 모델)입니다.</div>
+      </div>
+      <div class="arrow">▼</div>
+
+      <div class="step" data-i="4">
+        <div class="num">4</div>
+        <div class="body">
+          <div class="who">GAS → 구글 시트</div>
+          <h3>기록을 시트에 저장한다 📊</h3>
+          <p>분석 결과를 구글 시트에 한 줄 저장. 나중에 "이틀 연속 탄수 많네" 같은 맥락 코칭의 재료가 된다.</p>
+        </div>
+        <div class="detail">이 누적 기록이 에이전트의 '장기 기억'입니다.</div>
+      </div>
+      <div class="arrow">▼</div>
+
+      <div class="step" data-i="5">
+        <div class="num">5</div>
+        <div class="body">
+          <div class="who">GAS → 텔레그램</div>
+          <h3>답을 다시 보내 화면에 뜬다 💬</h3>
+          <p>GAS가 완성된 코칭 문장을 텔레그램으로 회신 → 내 대화창에 응답이 표시된다.</p>
+        </div>
+        <div class="detail">사용자 눈엔 간단하지만, 1~4단계가 순식간에 돌아간 결과입니다.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 재료 3 -->
+  <section>
+    <h2>응답을 만드는 3가지 재료</h2>
+    <p class="lead">봇의 답은 이 세 가지가 합쳐져서 나온다.</p>
+    <div class="cards">
+      <div class="card">
+        <div class="k">📥</div>
+        <h4>① 내 입력</h4>
+        <p>방금 보낸 사진 / 식단 글</p>
+      </div>
+      <div class="card">
+        <div class="k">📜</div>
+        <h4>② 시스템 프롬프트</h4>
+        <p>코치의 정체성·규칙<br>(무엇을 어떤 톤으로 분석할지)</p>
+      </div>
+      <div class="card">
+        <div class="k">🧠</div>
+        <h4>③ Gemini 모델</h4>
+        <p>음식·영양을 분석하는 AI 능력</p>
+      </div>
+    </div>
+    <p class="eq">① 내 입력 <b>+</b> ② 시스템 프롬프트 <b>+</b> ③ Gemini &nbsp;=&nbsp; <b>봇의 응답</b></p>
+    <p class="note">💡 하루 정리·주간 패턴처럼 맥락이 필요한 질문이면, 여기에 <b>구글 시트에 쌓인 과거 기록</b>까지 재료로 더해집니다.</p>
+  </section>
+
+  <!-- 부품 -->
+  <section>
+    <h2>네 가지 핵심 부품</h2>
+    <p class="lead">각자 맡은 역할이 다르다.</p>
+    <div class="parts">
+      <div class="part"><span class="ic">💬</span><div><b>텔레그램 봇</b><span>입력·출력 창구 (배달만 담당)</span></div></div>
+      <div class="part"><span class="ic">⚙️</span><div><b>Apps Script (GAS)</b><span>로직을 실행하는 두뇌·조율자</span></div></div>
+      <div class="part"><span class="ic">🧠</span><div><b>Gemini</b><span>사진·글을 읽고 분석·응답 생성</span></div></div>
+      <div class="part"><span class="ic">📊</span><div><b>구글 시트</b><span>모든 기록이 쌓이는 장기 기억</span></div></div>
+    </div>
+  </section>
+</div>
+
+<script>
+  const steps=[...document.querySelectorAll('.step')];
+  steps.forEach(s=>{
+    s.addEventListener('click',()=>{
+      const on=s.classList.contains('active');
+      steps.forEach(x=>x.classList.remove('active'));
+      if(!on)s.classList.add('active');
+    });
+  });
+  // 첫 단계 기본 펼침
+  steps[0].classList.add('active');
+</script>
+</body>
+</html>
