@@ -29,65 +29,49 @@
     max-width:640px;
     aspect-ratio:16 / 9;
     container-type:inline-size;
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    grid-template-rows:auto 1fr;
-    column-gap:clamp(14px,3cqw,26px);
-    align-items:center;
+    display:flex;
+    flex-direction:column;
   }
   .label{
-    grid-column:1 / -1;
     font-size:clamp(10px,2.2cqw,12px);
     letter-spacing:.04em;
     color:var(--sub);
     text-transform:uppercase;
   }
   .time{
-    grid-row:2;
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     font-variant-numeric:tabular-nums;
     font-feature-settings:"tnum";
-    font-size:clamp(40px,15cqw,88px);
+    font-size:clamp(64px,26cqw,150px);
     font-weight:600;
     line-height:1;
     letter-spacing:-.02em;
-    text-align:center;
     transition:color .2s;
   }
   .time.done{color:var(--red)}
   .time.paused{color:var(--sub)}
 
-  .panel{
-    grid-row:2;
+  .row{
     display:flex;
-    flex-direction:column;
-    gap:clamp(6px,1.4cqw,9px);
-    height:100%;
     justify-content:center;
+    gap:clamp(6px,1.6cqw,10px);
   }
-  .add{
-    display:flex;
-    gap:clamp(6px,1.4cqw,8px);
-  }
-  .add button{flex:1}
-  .ctrl{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:clamp(6px,1.4cqw,8px);
-  }
-  .ctrl .reset{grid-column:1 / -1}
-
   button{
     font-family:inherit;
-    font-size:clamp(12px,2.6cqw,14px);
+    font-size:clamp(12px,2.6cqw,15px);
     font-weight:500;
     color:var(--text);
     background:var(--bg);
     border:1px solid var(--line);
     border-radius:8px;
-    padding:clamp(8px,2cqw,11px) 10px;
+    padding:clamp(8px,2cqw,11px) clamp(12px,3cqw,20px);
     cursor:pointer;
-    transition:background .12s,border-color .12s,opacity .12s;
+    transition:background .12s,border-color .12s;
     -webkit-tap-highlight-color:transparent;
+    white-space:nowrap;
   }
   button:hover{background:var(--bg2)}
   button:active{background:var(--line)}
@@ -109,25 +93,19 @@
     <div class="label">타이머</div>
     <div class="time" id="display">00:00</div>
 
-    <div class="panel">
-      <div class="add">
-        <button data-add="60">+1분</button>
-        <button data-add="300">+5분</button>
-        <button data-add="600">+10분</button>
-      </div>
-      <div class="ctrl">
-        <button class="primary" id="pauseBtn">중지</button>
-        <button id="resumeBtn">재개</button>
-        <button class="reset" id="resetBtn">초기화</button>
-      </div>
+    <div class="row">
+      <button data-add="60">+1</button>
+      <button data-add="300">+5</button>
+      <button data-add="600">+10</button>
+      <button class="primary" id="startBtn">시작</button>
+      <button class="reset" id="resetBtn">초기화</button>
     </div>
   </div>
 
 <script>
 (function(){
   var display  = document.getElementById('display');
-  var pauseBtn = document.getElementById('pauseBtn');
-  var resumeBtn= document.getElementById('resumeBtn');
+  var startBtn = document.getElementById('startBtn');
   var resetBtn = document.getElementById('resetBtn');
 
   var remaining = 0;      // 남은 시간(ms)
@@ -145,11 +123,18 @@
     return (h>0 ? h+':'+pad(m)+':'+pad(s) : pad(m)+':'+pad(s));
   }
 
+  function label(){
+    if(running) startBtn.textContent = '중지';
+    else if(remaining > 0) startBtn.textContent = '재개';
+    else startBtn.textContent = '시작';
+  }
+
   function render(){
     var ms = running ? (endAt - Date.now()) : remaining;
     display.textContent = fmt(ms);
     display.classList.toggle('done', ms<=0 && !running && remaining<=0);
     display.classList.toggle('paused', !running && remaining>0);
+    label();
   }
 
   function loop(){
@@ -173,6 +158,7 @@
     if(tick) clearInterval(tick);
     tick = setInterval(loop, 100);
     loop();
+    label();
   }
 
   function pause(){
@@ -198,8 +184,12 @@
     });
   });
 
-  pauseBtn.addEventListener('click', pause);
-  resumeBtn.addEventListener('click', start);
+  // 시작/중지 토글
+  startBtn.addEventListener('click', function(){
+    if(running) pause();
+    else start();
+  });
+
   resetBtn.addEventListener('click', function(){
     running = false;
     remaining = 0;
