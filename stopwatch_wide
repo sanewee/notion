@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>타이머</title>
+<style>
+  :root{
+    --text:#37352F;
+    --sub:#787774;
+    --line:#EBEAE7;
+    --bg:#FFFFFF;
+    --bg2:#FBFBFA;
+    --blue:#2383E2;
+    --red:#E03E3E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo',
+      'Malgun Gothic',sans-serif;
+    background:var(--bg2);
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:clamp(8px,2.5vw,16px);
+  }
+  .card{
+    width:100%;
+    max-width:640px;
+    aspect-ratio:16 / 9;
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:clamp(14px,3.5cqw,28px);
+    box-shadow:0 1px 2px rgba(15,15,15,.04),0 4px 12px rgba(15,15,15,.03);
+    container-type:inline-size;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:auto 1fr;
+    column-gap:clamp(14px,3cqw,26px);
+    align-items:center;
+  }
+  .label{
+    grid-column:1 / -1;
+    font-size:clamp(10px,2.2cqw,12px);
+    letter-spacing:.04em;
+    color:var(--sub);
+    text-transform:uppercase;
+  }
+  .time{
+    grid-row:2;
+    font-variant-numeric:tabular-nums;
+    font-feature-settings:"tnum";
+    font-size:clamp(40px,15cqw,88px);
+    font-weight:600;
+    line-height:1;
+    letter-spacing:-.02em;
+    text-align:center;
+    transition:color .2s;
+  }
+  .time.done{color:var(--red)}
+  .time.paused{color:var(--sub)}
+
+  .panel{
+    grid-row:2;
+    display:flex;
+    flex-direction:column;
+    gap:clamp(6px,1.4cqw,9px);
+    height:100%;
+    justify-content:center;
+  }
+  .add{
+    display:flex;
+    gap:clamp(6px,1.4cqw,8px);
+  }
+  .add button{flex:1}
+  .ctrl{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:clamp(6px,1.4cqw,8px);
+  }
+  .ctrl .reset{grid-column:1 / -1}
+
+  button{
+    font-family:inherit;
+    font-size:clamp(12px,2.6cqw,14px);
+    font-weight:500;
+    color:var(--text);
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:clamp(8px,2cqw,11px) 10px;
+    cursor:pointer;
+    transition:background .12s,border-color .12s,opacity .12s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  button:hover{background:var(--bg2)}
+  button:active{background:var(--line)}
+  button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+  .primary{
+    color:#fff;
+    background:var(--blue);
+    border-color:var(--blue);
+  }
+  .primary:hover{background:#1a74cc;border-color:#1a74cc}
+  .primary:active{background:#1668b8}
+
+  .reset{color:var(--sub)}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="label">타이머</div>
+    <div class="time" id="display">00:00</div>
+
+    <div class="panel">
+      <div class="add">
+        <button data-add="60">+1분</button>
+        <button data-add="300">+5분</button>
+        <button data-add="600">+10분</button>
+      </div>
+      <div class="ctrl">
+        <button class="primary" id="pauseBtn">중지</button>
+        <button id="resumeBtn">재개</button>
+        <button class="reset" id="resetBtn">초기화</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var display  = document.getElementById('display');
+  var pauseBtn = document.getElementById('pauseBtn');
+  var resumeBtn= document.getElementById('resumeBtn');
+  var resetBtn = document.getElementById('resetBtn');
+
+  var remaining = 0;      // 남은 시간(ms)
+  var endAt = 0;          // 종료 예정 시각
+  var running = false;
+  var tick = null;
+
+  function fmt(ms){
+    if(ms < 0) ms = 0;
+    var total = Math.round(ms/1000);
+    var h = Math.floor(total/3600);
+    var m = Math.floor((total%3600)/60);
+    var s = total%60;
+    var pad = function(n){return (n<10?'0':'')+n;};
+    return (h>0 ? h+':'+pad(m)+':'+pad(s) : pad(m)+':'+pad(s));
+  }
+
+  function render(){
+    var ms = running ? (endAt - Date.now()) : remaining;
+    display.textContent = fmt(ms);
+    display.classList.toggle('done', ms<=0 && !running && remaining<=0);
+    display.classList.toggle('paused', !running && remaining>0);
+  }
+
+  function loop(){
+    var ms = endAt - Date.now();
+    if(ms <= 0){
+      remaining = 0;
+      running = false;
+      clearInterval(tick); tick = null;
+      render();
+      display.classList.add('done');
+      return;
+    }
+    display.textContent = fmt(ms);
+  }
+
+  function start(){
+    if(remaining <= 0) return;
+    running = true;
+    display.classList.remove('done','paused');
+    endAt = Date.now() + remaining;
+    if(tick) clearInterval(tick);
+    tick = setInterval(loop, 100);
+    loop();
+  }
+
+  function pause(){
+    if(!running) return;
+    remaining = endAt - Date.now();
+    if(remaining < 0) remaining = 0;
+    running = false;
+    clearInterval(tick); tick = null;
+    render();
+  }
+
+  // 시간 추가 → 바로 카운트다운 시작
+  document.querySelectorAll('[data-add]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var add = parseInt(btn.getAttribute('data-add'),10) * 1000;
+      display.classList.remove('done');
+      if(running){
+        endAt += add;
+      }else{
+        remaining += add;
+        start();
+      }
+    });
+  });
+
+  pauseBtn.addEventListener('click', pause);
+  resumeBtn.addEventListener('click', start);
+  resetBtn.addEventListener('click', function(){
+    running = false;
+    remaining = 0;
+    endAt = 0;
+    if(tick){clearInterval(tick); tick=null;}
+    display.classList.remove('done','paused');
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
