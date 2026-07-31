@@ -26,21 +26,18 @@
   }
   .card{
     width:100%;
-    aspect-ratio:16 / 9;
     container-type:inline-size;
     display:flex;
     flex-direction:column;
+    gap:clamp(10px,2.6cqw,20px);
   }
   .time{
-    flex:1;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    text-align:center;
     font-variant-numeric:tabular-nums;
     font-feature-settings:"tnum";
-    font-size:clamp(40px,20cqw,130px);
+    font-size:clamp(52px,27cqw,190px);
     font-weight:600;
-    line-height:1;
+    line-height:.95;
     letter-spacing:-.02em;
     transition:color .2s;
   }
