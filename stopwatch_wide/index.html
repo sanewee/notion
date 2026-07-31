@@ -32,12 +32,6 @@
     display:flex;
     flex-direction:column;
   }
-  .label{
-    font-size:clamp(10px,2.2cqw,12px);
-    letter-spacing:.04em;
-    color:var(--sub);
-    text-transform:uppercase;
-  }
   .time{
     flex:1;
     display:flex;
@@ -45,7 +39,7 @@
     justify-content:center;
     font-variant-numeric:tabular-nums;
     font-feature-settings:"tnum";
-    font-size:clamp(64px,26cqw,150px);
+    font-size:clamp(64px,28cqw,160px);
     font-weight:600;
     line-height:1;
     letter-spacing:-.02em;
@@ -60,6 +54,10 @@
     gap:clamp(6px,1.6cqw,10px);
   }
   button{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     font-family:inherit;
     font-size:clamp(12px,2.6cqw,15px);
     font-weight:500;
@@ -67,7 +65,7 @@
     background:var(--bg);
     border:1px solid var(--line);
     border-radius:8px;
-    padding:clamp(8px,2cqw,11px) clamp(12px,3cqw,20px);
+    padding:clamp(9px,2.2cqw,12px) 8px;
     cursor:pointer;
     transition:background .12s,border-color .12s;
     -webkit-tap-highlight-color:transparent;
@@ -76,6 +74,12 @@
   button:hover{background:var(--bg2)}
   button:active{background:var(--line)}
   button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+  button svg{
+    width:clamp(15px,3.6cqw,19px);
+    height:clamp(15px,3.6cqw,19px);
+    display:block;
+  }
 
   .primary{
     color:#fff;
@@ -90,15 +94,19 @@
 </head>
 <body>
   <div class="card">
-    <div class="label">타이머</div>
     <div class="time" id="display">00:00</div>
 
     <div class="row">
       <button data-add="60">+1</button>
       <button data-add="300">+5</button>
       <button data-add="600">+10</button>
-      <button class="primary" id="startBtn">시작</button>
-      <button class="reset" id="resetBtn">초기화</button>
+      <button class="primary" id="startBtn" aria-label="시작"></button>
+      <button class="reset" id="resetBtn" aria-label="초기화">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>
+        </svg>
+      </button>
     </div>
   </div>
 
@@ -107,6 +115,9 @@
   var display  = document.getElementById('display');
   var startBtn = document.getElementById('startBtn');
   var resetBtn = document.getElementById('resetBtn');
+
+  var ICON_PLAY  = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
 
   var remaining = 0;      // 남은 시간(ms)
   var endAt = 0;          // 종료 예정 시각
@@ -124,9 +135,8 @@
   }
 
   function label(){
-    if(running) startBtn.textContent = '중지';
-    else if(remaining > 0) startBtn.textContent = '재개';
-    else startBtn.textContent = '시작';
+    startBtn.innerHTML = running ? ICON_PAUSE : ICON_PLAY;
+    startBtn.setAttribute('aria-label', running ? '중지' : (remaining>0 ? '재개' : '시작'));
   }
 
   function render(){
